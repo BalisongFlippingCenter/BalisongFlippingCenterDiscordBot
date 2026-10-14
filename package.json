@@ -4,16 +4,17 @@
   "main": "index.js",
   "scripts": {
     "dev": "nodemon index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node index.js",
+    "deploy-commands": "node deploy-commands.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "description": "",
+  "description": "Balisong Discord bot: Latch AI plus catalog lookups, for any server",
   "dependencies": {
     "discord.js": "^14.26.4",
-    "dotenv": "^17.4.2",
-    "pg": "^8.21.0"
+    "dotenv": "^17.4.2"
   },
   "devDependencies": {
     "nodemon": "^3.1.14"

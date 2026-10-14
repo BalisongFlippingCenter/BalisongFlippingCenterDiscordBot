@@ -10,9 +10,9 @@ const commands = fs.readdirSync(path.join(__dirname, 'src/commands'))
 const rest = new REST({ version: '10' }).setToken(process.env.TOKEN);
 
 (async () => {
-  console.log(`Registering ${commands.length} slash commands...`);
+  console.log(`Registering ${commands.length} global slash commands...`);
   await rest.put(
-    Routes.applicationGuildCommands(process.env.CLIENT_ID, process.env.GUILD_ID),
+    Routes.applicationCommands(process.env.CLIENT_ID),
     { body: commands }
   );
   console.log('Done!');
