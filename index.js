@@ -9,7 +9,7 @@ const client = new Client({
 
 loadHandlers(client);
 
-client.once('ready', () => {
+client.once('clientReady', () => {
   console.log(`Logged in as ${client.user.tag} — in ${client.guilds.cache.size} servers`);
 });
 
