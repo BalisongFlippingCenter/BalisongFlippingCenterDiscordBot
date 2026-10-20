@@ -5,6 +5,7 @@ const {
   InteractionContextType,
   LabelBuilder,
   ModalBuilder,
+  PermissionFlagsBits,
   TextInputBuilder,
   TextInputStyle
 } = require('discord.js');
@@ -189,6 +190,14 @@ async function updateGame(interaction, messageId, game) {
     const message = { content: ping.content, allowedMentions: { users: ping.users.map(player => player.id) } };
     await (game.thread ? game.thread.send(message) : interaction.followUp(message));
   }
+
+  if (game.phase === 'over' && game.thread) await closeThread(game.thread, interaction.appPermissions);
+}
+
+async function closeThread(thread, botPermissions) {
+  await thread.send({ content: '-# Game over — this thread is closed. Start a new one with `/bali`.', allowedMentions: NO_PINGS });
+  if (botPermissions?.has(PermissionFlagsBits.ManageThreads)) await thread.setLocked(true);
+  await thread.setArchived(true);
 }
 
 module.exports = {
