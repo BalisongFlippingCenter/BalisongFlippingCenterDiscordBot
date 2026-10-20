@@ -1,33 +1,55 @@
 const tricks = require('../content/tricks');
 
 const LEVELS = ['beginner', 'intermediate', 'advanced', 'expert'];
-const MID_COUNTS = { beginner: [1, 2], intermediate: [2, 3], advanced: [3, 4], expert: [4, 5] };
+const MID_COUNTS = { beginner: [1, 2], intermediate: [2, 3], advanced: [3, 4] };
+const ATTEMPTS = 20;
 
+const rankOf = level => LEVELS.indexOf(level);
 const pick = list => list[Math.floor(Math.random() * list.length)];
 
+function movesAt(trick, rank) {
+  return (trick.variants ?? [null])
+    .map(variant => {
+      const [name, level] = variant?.split(':') ?? [];
+      return { trick, variant: name ?? null, level: level ?? trick.level };
+    })
+    .filter(move => rankOf(move.level) <= rank);
+}
+
+function draw(role, rank, used) {
+  const candidates = tricks.filter(trick =>
+    trick.roles.includes(role) && !used.has(trick.name) && !used.has(trick.family) && movesAt(trick, rank).length);
+  if (!candidates.length) return null;
+
+  const trick = pick(candidates);
+  used.add(trick.name);
+  if (trick.family) used.add(trick.family);
+  return pick(movesAt(trick, rank));
+}
+
 function generateCombo(level) {
-  const rank = LEVELS.indexOf(level);
-  const pool = tricks.filter(trick => LEVELS.indexOf(trick.level) <= rank);
-  const openers = pool.filter(trick => trick.role === 'opener');
-  const closers = pool.filter(trick => trick.role === 'closer');
-  const mids = pool.filter(trick => trick.role !== 'opener' && trick.role !== 'closer');
-
+  const rank = rankOf(level);
   const [min, max] = MID_COUNTS[level];
-  const midCount = min + Math.floor(Math.random() * (max - min + 1));
-  const middle = [...mids].sort(() => Math.random() - 0.5).slice(0, midCount);
-
-  const unusedAtLevel = mids.filter(trick => trick.level === level && !middle.includes(trick));
-  if (!middle.some(trick => trick.level === level) && unusedAtLevel.length) {
-    middle[Math.floor(Math.random() * middle.length)] = pick(unusedAtLevel);
+  let combo;
+  for (let attempt = 0; attempt < ATTEMPTS; attempt++) {
+    const used = new Set();
+    const midCount = min + Math.floor(Math.random() * (max - min + 1));
+    combo = [
+      draw('opener', rank, used),
+      ...Array.from({ length: midCount }, () => draw('mid', rank, used)),
+      draw('closer', rank, used)
+    ].filter(Boolean);
+    if (combo.some(move => move.level === level)) break;
   }
-
-  return [openers.length && pick(openers), ...middle, closers.length && pick(closers)].filter(Boolean);
+  return combo;
 }
 
 function formatCombo(combo) {
-  return combo.map((trick, i) => `${i + 1}. **${trick.name}** · ${trick.level}`).join('\n');
+  return combo
+    .map((move, i) => `${i + 1}. **${move.trick.name}**${move.variant ? ` (${move.variant})` : ''} · ${move.level}`)
+    .join('\n');
 }
 
-const levelChoices = LEVELS.map(level => ({ name: level[0].toUpperCase() + level.slice(1), value: level }));
+const levelChoices = Object.keys(MID_COUNTS).map(level => ({ name: level[0].toUpperCase() + level.slice(1), value: level }));
 
 module.exports = { generateCombo, formatCombo, levelChoices };

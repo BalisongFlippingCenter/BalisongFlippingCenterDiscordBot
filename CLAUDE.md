@@ -16,7 +16,8 @@ A public Discord bot that any server can add: a general balisong resource powere
 | `/help` | Ephemeral command list |
 
 ## Combos & Balidares
-- Tricks live in `src/content/tricks.js` (`name`, `level` beginner→expert matching the backend's `DifficultyTag`, `role` opener/mid/closer). **Currently placeholders** — the user is supplying the curated list. A trick without a `role` is treated as `mid`. Generation is in `src/utils/comboGenerator.js`.
+- Tricks live in `src/content/tricks.js` (the user's curated list): `name`, `level` (beginner/intermediate/advanced/expert, matching the backend's `DifficultyTag`), `roles` (any of opener/mid/closer), optional `aliases`, `variants` (`'ring:intermediate'` = variant name + optional level override, e.g. fingers for Chaplins), and `family` (at most one trick per family per combo — the three Chaplins share `chaplin`).
+- `src/utils/comboGenerator.js`: combo = one opener + random mids + one closer, all distinct tricks; a trick only qualifies if one of its variants is at or below the level, and the variant is picked from those. Retries (up to 20) until at least one move is at the chosen level. Mid counts per level are in `MID_COUNTS`, whose keys are also the selectable levels — Expert is left out until the list has expert tricks (only the thumb variants are expert today).
 - Cards are Components V2 messages built by `src/utils/challengeCard.js`. Landing videos are uploaded through a modal file-upload, then **re-uploaded by the bot** into the card's media gallery (Discord's modal/option attachment URLs expire). The bot's upload limit follows the server's boost tier (10 MB unboosted, 50 MB tier 2, 100 MB tier 3); bigger clips get a "trim it" message.
 - No database: all state lives in the message. The card body is read back from the first text display, kept videos from `message.attachments`, and owner/target IDs (+ level for reroll) from button custom IDs (`combo:<action>:<ownerId>[:level]`, `balidare:<action>:<targetId>`). `interactionCreate` routes buttons and modal submits to the command named by the custom ID's first segment (`button` / `modalSubmit` exports).
 
@@ -39,6 +40,6 @@ Local only for now. A public bot must be always-on before it's shared. Planned: 
 
 ## Known Gaps / To Do
 - Hosting (above)
-- Replace the placeholder trick list in `src/content/tricks.js` with the curated one
+- Add expert tricks, then add `expert` back to `MID_COUNTS` in `comboGenerator.js`
 - Balidare/combo stats (dares landed, streaks, leaderboards) — needs persistence
 - Fun ideas: `/trick-of-the-day` (same trick per server per day), `/compare knife1 knife2`, `/knife random`, one-click "ask Latch how to do this trick" from a combo
