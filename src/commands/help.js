@@ -21,7 +21,8 @@ module.exports = {
         '`/combo level:...` — a random combo for your skill level; land it and upload your clip to prove it',
         '`/balidare combo|video user:...` — dare someone to land a combo or match your clip; they answer with a video',
         '`/bali` — a game of B.A.L.I.: miss a trick, earn a letter',
-        '`/quiz` — a 30-second balisong quiz question for the channel'
+        '`/quiz` — a 30-second balisong quiz question for the channel',
+        '-# **Admins:** limit any command to specific channels or roles in *Server Settings → Integrations → Balisong Flipping Center Bot* — e.g. games in one channel, Latch in another. Latch answers and B.A.L.I. games open their own threads to keep chats tidy.'
       ].join('\n\n'))
       .setFooter({ text: 'Powered by Balisong Flipping Center' });
 

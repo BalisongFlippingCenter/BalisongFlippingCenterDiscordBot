@@ -1,5 +1,7 @@
 const askLatch = require('../utils/askLatch');
+const askLatchInThread = require('../utils/latchThread');
 const latchLimiter = require('../utils/latchLimiter');
+const { canStartThread } = require('../utils/threads');
 
 const NO_PINGS = { parse: [] };
 
@@ -17,6 +19,11 @@ module.exports = {
     const limitReached = latchLimiter.acquire(message.guildId ?? `user-${message.author.id}`);
     if (limitReached) {
       await message.reply({ content: limitReached, allowedMentions: NO_PINGS });
+      return;
+    }
+
+    if (canStartThread(message.channel, message.guild && message.channel.permissionsFor(message.guild.members.me))) {
+      await askLatchInThread({ starterMessage: message, userId: message.author.id, question });
       return;
     }
 

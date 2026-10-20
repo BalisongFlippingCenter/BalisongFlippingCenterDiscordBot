@@ -10,11 +10,13 @@ const {
 } = require('discord.js');
 const { buildCard } = require('../utils/challengeCard');
 const { playableMoves } = require('../utils/comboGenerator');
+const { canStartThread, threadName } = require('../utils/threads');
 
 const NO_PINGS = { parse: [] };
 const LETTERS = ['B', 'A', 'L', 'I'];
 const MAX_PLAYERS = 8;
 const IDLE_MS = 2 * 60 * 60 * 1000;
+const BALI_THREAD_ARCHIVE_MINUTES = 60;
 const games = new Map();
 
 const pick = list => list[Math.floor(Math.random() * list.length)];
@@ -184,7 +186,8 @@ async function updateGame(interaction, messageId, game) {
   const pingKey = `${game.phase}:${game.setter}:${game.trick}`;
   if (ping && pingKey !== game.lastPingKey) {
     game.lastPingKey = pingKey;
-    await interaction.followUp({ content: ping.content, allowedMentions: { users: ping.users.map(player => player.id) } });
+    const message = { content: ping.content, allowedMentions: { users: ping.users.map(player => player.id) } };
+    await (game.thread ? game.thread.send(message) : interaction.followUp(message));
   }
 }
 
@@ -201,7 +204,14 @@ module.exports = {
 
     const game = { hostId: interaction.user.id, players: [{ id: interaction.user.id, letters: 0 }], phase: 'lobby', lastActive: Date.now() };
     const response = await interaction.reply({ ...render(game), withResponse: true });
-    games.set(response.resource.message.id, game);
+    const message = response.resource.message;
+    games.set(message.id, game);
+
+    if (canStartThread(interaction.channel, interaction.appPermissions)) {
+      game.thread = await message.startThread({ name: threadName(`B.A.L.I. — ${interaction.user.displayName}'s game`), autoArchiveDuration: BALI_THREAD_ARCHIVE_MINUTES });
+      await game.thread.members.add(interaction.user.id);
+      await game.thread.send({ content: 'Turn pings and game chat go here. Join from the card above.', allowedMentions: NO_PINGS });
+    }
   },
 
   async button(interaction) {
