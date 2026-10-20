@@ -47,7 +47,7 @@ function generateCombo(level) {
 function formatCombo(combo) {
   return combo
     .map((move, i) => `${i + 1}. **${move.trick.name}**${move.variant ? ` (${move.variant})` : ''} · ${move.level}`)
-    .join('\n');
+    .join('\n') + '\n-# Hit these tricks in order — add any transitions you need to link them.';
 }
 
 const levelChoices = Object.keys(MID_COUNTS).map(level => ({ name: level[0].toUpperCase() + level.slice(1), value: level }));
