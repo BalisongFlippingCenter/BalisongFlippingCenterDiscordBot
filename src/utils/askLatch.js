@@ -48,7 +48,10 @@ module.exports = async ({ sessionId, question, firstMessage, sendFollowUp }) => 
   try {
     const response = await requestLatch(sessionId, question);
     if (!response.ok) {
-      text = `⚠️ Latch couldn't answer right now (${response.status}): ${await response.text()}`;
+      console.error(`Latch request failed with ${response.status}:`, await response.text());
+      text = response.status === 429
+        ? "⏳ You're asking Latch questions too quickly — wait a minute and try again."
+        : "⚠️ Latch couldn't answer right now. Try again in a moment.";
       return await render();
     }
 

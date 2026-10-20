@@ -20,6 +20,9 @@ module.exports = (client) => {
 
   for (const file of eventFiles) {
     const event = require(`../events/${file}`);
-    client.on(event.name, (...args) => event.execute(...args));
+    client.on(event.name, (...args) => event.execute(...args)
+      .catch(error => console.error(`${event.name} handler failed:`, error)));
   }
+
+  client.on('error', error => console.error('Discord client error:', error));
 };

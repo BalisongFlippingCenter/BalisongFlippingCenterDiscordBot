@@ -2,8 +2,6 @@ const { SlashCommandBuilder } = require('discord.js');
 const askLatch = require('../utils/askLatch');
 const latchLimiter = require('../utils/latchLimiter');
 
-const LIMIT_REACHED = "⏳ Latch has hit this server's hourly question limit — try again a bit later.";
-
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('latch')
@@ -15,11 +13,10 @@ module.exports = {
         .setMaxLength(1500)
     ),
 
-  LIMIT_REACHED,
-
   async execute(interaction) {
-    if (!latchLimiter.tryAcquire(interaction.guildId ?? `user-${interaction.user.id}`)) {
-      await interaction.reply({ content: LIMIT_REACHED, ephemeral: true });
+    const limitReached = latchLimiter.acquire(interaction.guildId ?? `user-${interaction.user.id}`);
+    if (limitReached) {
+      await interaction.reply({ content: limitReached, ephemeral: true });
       return;
     }
 

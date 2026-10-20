@@ -14,7 +14,8 @@ A public Discord bot that any server can add: a general balisong resource powere
 ## Latch integration
 - Calls the backend's `POST /ai/chat` with `X-Client-Id: discord` / `X-Client-Key: AI_CLIENT_KEY_DISCORD`. The backend forwards `client: "discord"` to the AI service, which then uses a separate Discord persona (general balisong expert, Discord markdown) with only the catalog tools plus a Brave-backed `web_search` tool — see the AI service README.
 - `sessionId` = `discord-<channelId>-<userId>`: per-user conversation memory per channel (24h in Redis), and the backend's 10/min rate limit applies per session.
-- Bot-side cost guard: `src/utils/latchLimiter.js`, in-memory sliding window per server (`LATCH_LIMIT_PER_SERVER_PER_HOUR`, default 30; DMs keyed per user). Resets on restart.
+- Bot-side cost guard: `src/utils/latchLimiter.js`, in-memory sliding windows — per server per hour (`LATCH_LIMIT_PER_SERVER_PER_HOUR`, default 30; DMs keyed per user) and across all servers per day (`LATCH_LIMIT_GLOBAL_PER_DAY`, default 500). Resets on restart.
+- Backend errors are logged; users only see a friendly message (429 gets a "slow down" message). Every event handler's rejections are caught and logged in `src/handlers/index.js`, so a failed reply (missing permissions, deleted message) can't crash the process.
 - Replies stream by editing the message ~every 1.2s and split across messages at 2,000 chars. All output uses `allowedMentions: { parse: [] }` so Latch can never ping.
 - Only `Guilds` + `GuildMessages` intents — **no privileged Message Content intent**. Discord still delivers content for messages that @mention the bot, which is all mention-to-ask needs, so the bot never needs Discord's privileged-intent verification as it grows.
 
@@ -29,4 +30,4 @@ Local only for now. A public bot must be always-on before it's shared. Planned: 
 
 ## Known Gaps / To Do
 - Hosting (above)
-- No global daily Latch cap — only the per-server hourly limit
+- No way to reset a Latch conversation early — would need a backend endpoint to clear the Redis session

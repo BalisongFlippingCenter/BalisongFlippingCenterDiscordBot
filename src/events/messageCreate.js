@@ -1,6 +1,5 @@
 const askLatch = require('../utils/askLatch');
 const latchLimiter = require('../utils/latchLimiter');
-const { LIMIT_REACHED } = require('../commands/latch');
 
 const NO_PINGS = { parse: [] };
 
@@ -15,8 +14,9 @@ module.exports = {
       return;
     }
 
-    if (!latchLimiter.tryAcquire(message.guildId ?? `user-${message.author.id}`)) {
-      await message.reply({ content: LIMIT_REACHED, allowedMentions: NO_PINGS });
+    const limitReached = latchLimiter.acquire(message.guildId ?? `user-${message.author.id}`);
+    if (limitReached) {
+      await message.reply({ content: limitReached, allowedMentions: NO_PINGS });
       return;
     }
 
