@@ -161,10 +161,31 @@ function apply(game, action, userId) {
   }
 }
 
+function turnPing(game) {
+  if (game.phase === 'setting') {
+    return { users: [setterOf(game)], content: `🎯 ${mention(setterOf(game))}, you're up — set the next trick in B.A.L.I.` };
+  }
+  if (game.phase === 'responding') {
+    const pending = pendingPlayers(game);
+    return { users: pending, content: `⚔️ Trick set: **${game.trick}** — ${pending.map(mention).join(', ')}, land it or take a letter.` };
+  }
+  if (game.phase === 'over' && game.winner) {
+    return { users: [game.winner], content: `🏆 ${mention(game.winner)} wins B.A.L.I.!` };
+  }
+  return null;
+}
+
 async function updateGame(interaction, messageId, game) {
   game.lastActive = Date.now();
   if (game.phase === 'over') games.delete(messageId);
   await interaction.update(render(game));
+
+  const ping = turnPing(game);
+  const pingKey = `${game.phase}:${game.setter}:${game.trick}`;
+  if (ping && pingKey !== game.lastPingKey) {
+    game.lastPingKey = pingKey;
+    await interaction.followUp({ content: ping.content, allowedMentions: { users: ping.users.map(player => player.id) } });
+  }
 }
 
 module.exports = {
