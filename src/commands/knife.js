@@ -1,29 +1,8 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const bfcApi = require('../utils/bfcApi');
+const { formatEnum, formatPrice, sortedVersions, currentVersion, findKnife, respondWithKnives } = require('../utils/catalogFormat');
 
 const EMBED_COLOR = 0x5865F2;
-const SPECIAL_NAMES = {
-  AEB_L: 'AEB-L',
-  AUS_10: 'AUS-10',
-  G_10: 'G10',
-  G_10_TITANIUM: 'G10 / Titanium',
-  G_10_ALUMINIUM: 'G10 / Aluminium',
-  MAGNACUT: 'MagnaCut',
-  CPVC: 'CPVC',
-  HDPE: 'HDPE'
-};
-
-function formatEnum(value) {
-  if (!value || value === 'UNKNOWN') return null;
-  if (SPECIAL_NAMES[value]) return SPECIAL_NAMES[value];
-  return value.replace(/^STEEL_/, '').split('_')
-    .map(word => /\d/.test(word) ? word : word.charAt(0) + word.slice(1).toLowerCase())
-    .join(' ');
-}
-
-function formatPrice(msrp) {
-  return msrp.toLocaleString('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: msrp % 1 ? 2 : 0 });
-}
 
 function describeVariant(variant) {
   const detail = variant.type === 'TRAINER'
@@ -33,8 +12,8 @@ function describeVariant(variant) {
 }
 
 function buildKnifeEmbed(knife) {
-  const versions = [...knife.versions].sort((a, b) => (b.releaseYear ?? 0) - (a.releaseYear ?? 0));
-  const current = versions.find(version => !version.discontinued) ?? versions[0];
+  const versions = sortedVersions(knife);
+  const current = currentVersion(knife);
   const description = current.description ?? knife.description ?? '';
 
   const embed = new EmbedBuilder()
@@ -74,22 +53,13 @@ module.exports = {
         .setAutocomplete(true)
     ),
 
-  async autocomplete(interaction) {
-    const knives = await bfcApi.searchKnives(interaction.options.getFocused());
-    await interaction.respond(
-      knives.slice(0, 25).map(knife => ({ name: `${knife.name} — ${knife.makerName}`.slice(0, 100), value: knife.slug }))
-    );
-  },
+  autocomplete: respondWithKnives,
 
   async execute(interaction) {
     const input = interaction.options.getString('name');
     await interaction.deferReply();
 
-    let knife = await bfcApi.getKnife(input);
-    if (!knife) {
-      const [match] = await bfcApi.searchKnives(input);
-      knife = match && await bfcApi.getKnife(match.slug);
-    }
+    const knife = await findKnife(input);
     if (!knife) {
       await interaction.editReply(`Couldn't find **${input}** in the catalog. Try \`/latch\` — it can search the web too.`);
       return;

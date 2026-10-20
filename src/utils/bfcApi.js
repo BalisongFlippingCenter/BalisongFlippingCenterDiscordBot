@@ -11,6 +11,7 @@ async function get(path, params = {}) {
 
 module.exports = {
   searchKnives: search => get('/catalog/any/knives', { search }),
+  filterKnives: filters => get('/catalog/any/knives', filters),
   getKnife: slug => get(`/catalog/any/knives/${encodeURIComponent(slug)}`),
   listMakers: () => get('/catalog/any/makers'),
   getMaker: slug => get(`/catalog/any/makers/${encodeURIComponent(slug)}`),
