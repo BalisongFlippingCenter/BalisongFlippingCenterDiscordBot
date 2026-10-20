@@ -6,6 +6,7 @@ A public Discord bot that any server can add: a general balisong resource powere
 | Command | What it does |
 |---|---|
 | `/latch question:` or @mention | Ask Latch (streams the reply) |
+| `/latch-reset` | Clears your Latch conversation in this channel (ephemeral). Calls the backend's `DELETE /ai/chat/session/{sessionId}`, which only lets a client clear sessions prefixed with its own client ID |
 | `/knife name:` | Catalog lookup → embed (current version specs, variants + MSRP, other versions). Autocomplete via `/catalog/any/knives?search=` |
 | `/maker name:` | Maker embed with their knives. Autocomplete from `/catalog/any/makers` |
 | `/learn topic:` | Static explainers from `src/content/learnTopics.js`; topics with a `learnSlug` link to the site's `/learn/<slug>` page |
@@ -30,4 +31,3 @@ Local only for now. A public bot must be always-on before it's shared. Planned: 
 
 ## Known Gaps / To Do
 - Hosting (above)
-- No way to reset a Latch conversation early — would need a backend endpoint to clear the Redis session
