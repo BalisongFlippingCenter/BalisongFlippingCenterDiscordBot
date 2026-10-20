@@ -9,6 +9,12 @@ A public Discord bot that any server can add: a general balisong resource powere
 | `/latch-reset` | Clears your Latch conversation in this channel (ephemeral). Calls the backend's `DELETE /ai/chat/session/{sessionId}`, which only lets a client clear sessions prefixed with its own client ID |
 | `/knife name:` | Catalog lookup → embed (current version specs, variants + MSRP, other versions). Autocomplete via `/catalog/any/knives?search=` |
 | `/maker name:` | Maker embed with their knives. Autocomplete from `/catalog/any/makers` |
+| `/compare knife1: knife2:` | Current versions side by side (inline embed fields). Same autocomplete as `/knife` |
+| `/recommend [budget] [pivot] [handle]` | Catalog filter: `maxPrice`/`pivotSystem` go to the API; `handle` is a group (e.g. "Plastic (any type)") matched bot-side against `handleMaterialSummary` keywords, since the API only matches exact enums. Up to 10, cheapest first |
+| `/quiz` | 30-second multiple-choice question generated from a random catalog knife (pivot, handles, price, maker, weight, length). Anyone answers once (ephemeral feedback), then the card reveals the answer and who got it. Rounds held in memory |
+| `/trick info name:` / `/trick random [level]` | Trick card from `tricks.js` (level, roles, variants by level, aliases) with an 🤖 Ask Latch how button (goes through `latch.js`'s `ask`, so Latch limits apply) |
+| `/trick-of-the-day [level]` | Same move for everyone per UTC day (per level). Seeded shuffle per cycle, so every move at a level appears once before repeats. Card where **anyone** can add a landing clip (max 10; landers derived from `landing-<userId>.*` attachment names) |
+| `/bali` | B.A.L.I. (H.O.R.S.E. for flipping): lobby → host starts → setter types or rolls a trick → others self-report ✅/❌ → misses earn letters, B-A-L-I is out, last standing wins. Host can skip a setter / skip pending players (counted as missed) / end. Guild-only, max 8 players. **Games live in memory** (a restart expires them; idle 2h games are swept) |
 | `/learn topic:` | Static explainers from `src/content/learnTopics.js`; topics with a `learnSlug` link to the site's `/learn/<slug>` page |
 | `/combo level:` | Random combo at or below the level (always includes at least one trick at it); number of tricks is random and grows with level. Requester-only 🎲 Reroll and 📹 I landed it buttons |
 | `/balidare combo user: [level:] [combo:]` | Dare a user with a generated (by level) or typed combo. Pings only the dared user |

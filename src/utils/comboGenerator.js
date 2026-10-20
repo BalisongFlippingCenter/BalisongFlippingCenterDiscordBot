@@ -46,10 +46,34 @@ function generateCombo(level) {
 
 function formatCombo(combo) {
   return combo
-    .map((move, i) => `${i + 1}. **${move.trick.name}**${move.variant ? ` (${move.variant})` : ''} · ${move.level}`)
+    .map((move, i) => `${i + 1}. ${formatMove(move)}`)
     .join('\n') + '\n-# Hit these tricks in order — add any transitions you need to link them.';
+}
+
+function formatMove(move) {
+  return `**${move.trick.name}**${move.variant ? ` (${move.variant})` : ''} · ${move.level}`;
+}
+
+function allMovesOf(trick) {
+  return movesAt(trick, LEVELS.length - 1);
+}
+
+function playableMoves() {
+  const maxRank = rankOf(Object.keys(MID_COUNTS).at(-1));
+  return tricks.flatMap(trick => movesAt(trick, maxRank));
+}
+
+function findTrick(name) {
+  const needle = name.trim().toLowerCase();
+  return tricks.find(trick => [trick.name, ...(trick.aliases ?? [])].some(alias => alias.toLowerCase() === needle))
+    ?? tricks.find(trick => trick.name.toLowerCase().includes(needle));
+}
+
+function searchTricks(query) {
+  const needle = query.trim().toLowerCase();
+  return tricks.filter(trick => [trick.name, ...(trick.aliases ?? [])].some(alias => alias.toLowerCase().includes(needle)));
 }
 
 const levelChoices = Object.keys(MID_COUNTS).map(level => ({ name: level[0].toUpperCase() + level.slice(1), value: level }));
 
-module.exports = { generateCombo, formatCombo, levelChoices };
+module.exports = { generateCombo, formatCombo, formatMove, allMovesOf, playableMoves, findTrick, searchTricks, levelChoices };

@@ -2,6 +2,22 @@ const { SlashCommandBuilder } = require('discord.js');
 const askLatch = require('../utils/askLatch');
 const latchLimiter = require('../utils/latchLimiter');
 
+async function ask(interaction, question) {
+  const limitReached = latchLimiter.acquire(interaction.guildId ?? `user-${interaction.user.id}`);
+  if (limitReached) {
+    await interaction.reply({ content: limitReached, ephemeral: true });
+    return;
+  }
+
+  await interaction.deferReply();
+  await askLatch({
+    sessionId: `discord-${interaction.channelId}-${interaction.user.id}`,
+    question,
+    firstMessage: { edit: content => interaction.editReply(content) },
+    sendFollowUp: content => interaction.followUp(content)
+  });
+}
+
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('latch')
@@ -13,19 +29,9 @@ module.exports = {
         .setMaxLength(1500)
     ),
 
-  async execute(interaction) {
-    const limitReached = latchLimiter.acquire(interaction.guildId ?? `user-${interaction.user.id}`);
-    if (limitReached) {
-      await interaction.reply({ content: limitReached, ephemeral: true });
-      return;
-    }
+  ask,
 
-    await interaction.deferReply();
-    await askLatch({
-      sessionId: `discord-${interaction.channelId}-${interaction.user.id}`,
-      question: interaction.options.getString('question'),
-      firstMessage: { edit: content => interaction.editReply(content) },
-      sendFollowUp: content => interaction.followUp(content)
-    });
+  async execute(interaction) {
+    await ask(interaction, interaction.options.getString('question'));
   }
 };
