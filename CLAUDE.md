@@ -10,7 +10,15 @@ A public Discord bot that any server can add: a general balisong resource powere
 | `/knife name:` | Catalog lookup → embed (current version specs, variants + MSRP, other versions). Autocomplete via `/catalog/any/knives?search=` |
 | `/maker name:` | Maker embed with their knives. Autocomplete from `/catalog/any/makers` |
 | `/learn topic:` | Static explainers from `src/content/learnTopics.js`; topics with a `learnSlug` link to the site's `/learn/<slug>` page |
+| `/combo level:` | Random combo at or below the level (always includes at least one trick at it); number of tricks is random and grows with level. Requester-only 🎲 Reroll and 📹 I landed it buttons |
+| `/balidare combo user: [level:] [combo:]` | Dare a user with a generated (by level) or typed combo. Pings only the dared user |
+| `/balidare video user: video: [note:]` | Dare a user with your own clip. Guild-only; 5 dares per user per 10 min (in-memory) |
 | `/help` | Ephemeral command list |
+
+## Combos & Balidares
+- Tricks live in `src/content/tricks.js` (`name`, `level` beginner→expert matching the backend's `DifficultyTag`, `role` opener/mid/closer). **Currently placeholders** — the user is supplying the curated list. A trick without a `role` is treated as `mid`. Generation is in `src/utils/comboGenerator.js`.
+- Cards are Components V2 messages built by `src/utils/challengeCard.js`. Landing videos are uploaded through a modal file-upload, then **re-uploaded by the bot** into the card's media gallery (Discord's modal/option attachment URLs expire). The bot's upload limit follows the server's boost tier (10 MB unboosted, 50 MB tier 2, 100 MB tier 3); bigger clips get a "trim it" message.
+- No database: all state lives in the message. The card body is read back from the first text display, kept videos from `message.attachments`, and owner/target IDs (+ level for reroll) from button custom IDs (`combo:<action>:<ownerId>[:level]`, `balidare:<action>:<targetId>`). `interactionCreate` routes buttons and modal submits to the command named by the custom ID's first segment (`button` / `modalSubmit` exports).
 
 ## Latch integration
 - Calls the backend's `POST /ai/chat` with `X-Client-Id: discord` / `X-Client-Key: AI_CLIENT_KEY_DISCORD`. The backend forwards `client: "discord"` to the AI service, which then uses a separate Discord persona (general balisong expert, Discord markdown) with only the catalog tools plus a Brave-backed `web_search` tool — see the AI service README.
@@ -24,10 +32,13 @@ A public Discord bot that any server can add: a general balisong resource powere
 - `npm install`, copy `.env.example` → `.env`, fill in values (`AI_CLIENT_KEY_DISCORD` must match the backend's)
 - `npm run deploy-commands` — registers every command in `src/commands` globally (rerun after adding/changing a command's definition)
 - `npm run dev` (nodemon) or `npm start`
-- Invite URL: Developer Portal → OAuth2 → URL Generator, scopes `bot` + `applications.commands`, permissions Send Messages, Embed Links, Read Message History. Turn on "Public Bot" so other servers can add it.
+- Invite URL: Developer Portal → OAuth2 → URL Generator, scopes `bot` + `applications.commands`, permissions Send Messages, Embed Links, Attach Files, Read Message History. Turn on "Public Bot" so other servers can add it.
 
 ## Hosting
 Local only for now. A public bot must be always-on before it's shared. Planned: container alongside the backend on the prod EC2 (compose network → `http://server:8080`), secrets via SSM in `BalisongFlippingCenterTerraformProd`.
 
 ## Known Gaps / To Do
 - Hosting (above)
+- Replace the placeholder trick list in `src/content/tricks.js` with the curated one
+- Balidare/combo stats (dares landed, streaks, leaderboards) — needs persistence
+- Fun ideas: `/trick-of-the-day` (same trick per server per day), `/compare knife1 knife2`, `/knife random`, one-click "ask Latch how to do this trick" from a combo
