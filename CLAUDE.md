@@ -24,10 +24,13 @@ A public Discord bot that any server can add: a general balisong resource powere
 - `npm install`, copy `.env.example` → `.env`, fill in values (`AI_CLIENT_KEY_DISCORD` must match the backend's)
 - `npm run deploy-commands` — registers every command in `src/commands` globally (rerun after adding/changing a command's definition)
 - `npm run dev` (nodemon) or `npm start`
+- **Never run locally with the prod token while the hosted bot is up** — both connections receive every interaction and race to answer it. Use a separate dev application/token for local testing.
 - Invite URL: Developer Portal → OAuth2 → URL Generator, scopes `bot` + `applications.commands`, permissions Send Messages, Embed Links, Read Message History. Turn on "Public Bot" so other servers can add it.
 
 ## Hosting
-Local only for now. A public bot must be always-on before it's shared. Planned: container alongside the backend on the prod EC2 (compose network → `http://server:8080`), secrets via SSM in `BalisongFlippingCenterTerraformProd`.
+- Runs as a Docker container on the **prod backend EC2 instance** (`balisong-prod-server`), as its own compose project in `/home/ec2-user/discord-bot/` — separate from the backend's compose file, so deploys of one never restart the other. Reaches the backend at `http://host.docker.internal:8080/api` (the host's published 8080), not through CloudFront. `mem_limit: 256m`, json-file logs capped at 3×10 MB; `docker logs discord-bot` on the instance.
+- **Deploy**: `.github/workflows/deploy.yml` on push to `main` (or manual dispatch): check (syntax + load every command definition) → build and push to ECR (`AWS_ECR_REPOSITORY_URL` repo var, tagged with the SHA and `latest`) via OIDC (`AWS_BOT_DEPLOY_ROLE_ARN`) → SSM `send-command` runs `deploy/remote-deploy.sh` on the instance, found by its `Name` tag (no stored instance ID to go stale). The script rewrites the compose file (pinned to the SHA tag) and `.env`, pulls, `up -d`, registers slash commands (`deploy-commands.js` in the new image), and fails the deploy unless the logs show "Logged in" within 60s. Because it writes everything itself, a rebuilt instance is set up again by the next deploy; the backend's `user_data` knows nothing about the bot.
+- **Config/secrets**: `/balisong/prod/discord-bot/*` in SSM (CLIENT_ID, BFC_API_BASE_URL, BFC_SITE_URL, the two Latch limits — `infra/ssm_parameters.tf`; TOKEN — `secrets/`, value set with `aws ssm put-parameter`) plus the shared `/balisong/prod/AI_CLIENT_KEY_DISCORD`, re-read into `.env` on every deploy. Change a value → rerun the deploy workflow.
+- In-memory state (Latch limits, quiz rounds, B.A.L.I. games, dare cooldowns) resets on every deploy/restart.
+- Cost: shares the existing t3.small; ECR storage is cents/month. The real variable cost is Latch (Bedrock + Brave) — `LATCH_LIMIT_GLOBAL_PER_DAY` is the ceiling.
 
-## Known Gaps / To Do
-- Hosting (above)
