@@ -1,4 +1,5 @@
 const latchFeedback = require('./latchFeedback');
+const logUsage = require('./usageLog');
 
 const DISCORD_MESSAGE_LIMIT = 2000;
 const EDIT_INTERVAL_MS = 1200;
@@ -47,34 +48,37 @@ module.exports = async ({ sessionId, question, firstMessage, sendFollowUp }) => 
     }
   };
 
+  const started = Date.now();
+  let status = 'network_error';
   let answered = false;
   try {
     const response = await requestLatch(sessionId, question);
+    status = response.status;
     if (!response.ok) {
       console.error(`Latch request failed with ${response.status}:`, await response.text());
       text = response.status === 429
         ? "⏳ You're asking Latch questions too quickly — wait a minute and try again."
         : "⚠️ Latch couldn't answer right now. Try again in a moment.";
-      return await render();
-    }
-
-    const decoder = new TextDecoder();
-    let lastRender = 0;
-    for await (const chunk of response.body) {
-      text += decoder.decode(chunk, { stream: true });
-      if (Date.now() - lastRender >= EDIT_INTERVAL_MS) {
-        lastRender = Date.now();
-        await render();
+    } else {
+      const decoder = new TextDecoder();
+      let lastRender = 0;
+      for await (const chunk of response.body) {
+        text += decoder.decode(chunk, { stream: true });
+        if (Date.now() - lastRender >= EDIT_INTERVAL_MS) {
+          lastRender = Date.now();
+          await render();
+        }
       }
+      text += decoder.decode();
+      answered = Boolean(text.trim());
+      if (!answered) text = "⚠️ Latch didn't return an answer. Try asking again.";
     }
-    text += decoder.decode();
-    answered = Boolean(text.trim());
-    if (!answered) text = "⚠️ Latch didn't return an answer. Try asking again.";
   } catch (error) {
     console.error('Latch request failed:', error);
     text += `${text ? '\n\n' : ''}⚠️ Lost the connection to Latch. Try asking again.`;
   }
 
+  logUsage('latch', { status, result: answered ? 'ok' : 'error', ms: Date.now() - started, chars: answered ? text.length : 0 });
   await render();
   if (answered) {
     const answerId = latchFeedback.recordAnswer(sessionId, question, text);

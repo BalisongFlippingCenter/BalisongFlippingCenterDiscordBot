@@ -1,3 +1,5 @@
+const logUsage = require('./usageLog');
+
 const HOUR_MS = 60 * 60 * 1000;
 const DAY_MS = 24 * HOUR_MS;
 const serverUsage = new Map();
@@ -16,8 +18,14 @@ module.exports = {
     serverUsage.set(key, recent);
     globalUsage = globalUsage.filter(time => now - time < DAY_MS);
 
-    if (globalUsage.length >= globalLimit) return GLOBAL_LIMIT_REACHED;
-    if (recent.length >= serverLimit) return SERVER_LIMIT_REACHED;
+    if (globalUsage.length >= globalLimit) {
+      logUsage('latch_limited', { limit: 'global', key });
+      return GLOBAL_LIMIT_REACHED;
+    }
+    if (recent.length >= serverLimit) {
+      logUsage('latch_limited', { limit: 'server', key });
+      return SERVER_LIMIT_REACHED;
+    }
 
     recent.push(now);
     globalUsage.push(now);

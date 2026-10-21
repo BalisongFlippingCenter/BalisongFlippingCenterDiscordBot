@@ -64,6 +64,30 @@ It's a general balisong resource for any server — not support for the BFC webs
 - AWS access is via **GitHub OIDC** — no long-lived keys. The deploy role is scoped to this repo's `main` branch, this repo's ECR repository, and the one instance, which the workflow finds by its `Name` tag.
 - Secrets (the bot token, the shared Latch client key) live in **SSM Parameter Store** and are re-read on every deploy. Infrastructure is in Terraform in the org's infra repo.
 
+## Usage logs
+
+Every command, button, Latch call, limit hit, and server join/leave is one JSON log line in CloudWatch (`/balisong/prod/discord-bot`). Some Logs Insights queries:
+
+```
+# Most-used commands
+filter event = "command" | stats count(*) as uses by name | sort uses desc
+
+# Latch calls, failures, and average time per day
+filter event = "latch" | stats count(*) as calls, sum(result = "error") as failed, avg(ms) as avgMs by bin(1d)
+
+# How often the Latch caps are hit
+filter event = "latch_limited" | stats count(*) by limit, bin(1d)
+
+# Active servers per day
+filter event in ["command", "button", "mention"] and guild != "dm" | stats count_distinct(guild) as servers by bin(1d)
+
+# Current server count
+filter ispresent(servers) | sort @timestamp desc | limit 1
+
+# Errors by command
+filter result = "error" and event != "latch" | stats count(*) by name, action
+```
+
 ## Running locally
 
 ```bash

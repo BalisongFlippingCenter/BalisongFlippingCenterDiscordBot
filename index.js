@@ -3,6 +3,7 @@ require('dotenv').config();
 
 const loadHandlers = require('./src/handlers');
 const trickOfTheDayScheduler = require('./src/utils/trickOfTheDayScheduler');
+const logUsage = require('./src/utils/usageLog');
 
 const client = new Client({
   intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages]
@@ -12,6 +13,7 @@ loadHandlers(client);
 
 client.once('clientReady', () => {
   console.log(`Logged in as ${client.user.tag} — in ${client.guilds.cache.size} servers`);
+  logUsage('ready', { servers: client.guilds.cache.size });
   trickOfTheDayScheduler.start(client);
 });
 
