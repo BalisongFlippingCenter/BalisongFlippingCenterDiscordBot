@@ -74,3 +74,18 @@ test('setters who are out get skipped', () => {
   act(game, 'landed', 'p3');
   assert.equal(game.players[game.setter].id, 'p3');
 });
+
+test('shutdown marks active games as ended by a restart', async () => {
+  const bali = require('../src/commands/bali');
+  const edits = [];
+  const interaction = {
+    user: { id: 'host', displayName: 'Host' },
+    channel: null,
+    reply: async () => ({ resource: { message: { id: 'card-1' } } }),
+    editReply: async card => edits.push(JSON.stringify(card))
+  };
+  await bali.execute(interaction);
+  await bali.shutdown();
+  assert.equal(edits.length, 1);
+  assert.match(edits[0], /bot restarted/);
+});
