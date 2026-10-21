@@ -6,7 +6,8 @@
     "dev": "nodemon index.js",
     "test": "node --test",
     "start": "node index.js",
-    "deploy-commands": "node deploy-commands.js"
+    "deploy-commands": "node deploy-commands.js",
+    "export-feedback": "node scripts/export-feedback.js"
   },
   "keywords": [],
   "author": "",
