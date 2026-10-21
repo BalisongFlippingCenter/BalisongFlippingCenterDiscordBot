@@ -25,9 +25,10 @@ It's a general balisong resource for any server — not support for the BFC webs
 | | `/balidare combo\|video user:` | Dare someone to land a combo — or match your clip. They answer with a video |
 | **Games** | `/bali` | B.A.L.I. — H.O.R.S.E. for flipping: miss a trick, earn a letter |
 | | `/quiz [questions]` | A timed multiple-choice quiz from the knife catalog, with a leaderboard |
+| **Admin** | `/setup` | Post the trick of the day in a channel every day, and keep Latch and games to their own channels |
 | | `/help` | Everything above |
 
-**Server admins:** limit any command to specific channels or roles in *Server Settings → Integrations → Balisong Flipping Center Bot* — e.g. games in one channel, Latch in another.
+**Server admins:** `/setup` (Manage Server) covers the daily trick post and Latch/games channels. For roles or finer per-command control, use *Server Settings → Integrations → Balisong Flipping Center Bot*.
 
 ---
 
@@ -81,8 +82,10 @@ Use a **separate Discord application/token** for local development — running l
 index.js                 client setup and login
 deploy-commands.js       registers every command globally
 src/commands/            one file per slash command (plus its button/modal handlers)
-src/events/              interactionCreate (routes commands, buttons, modals) · messageCreate (@mentions)
+src/events/              interactionCreate (routes commands, buttons, modals) · messageCreate (@mentions) · guildDelete
 src/utils/               Latch streaming + limits, catalog client, combo generator, cards, threads
+src/db.js                SQLite (node:sqlite) — per-server settings
 src/content/             trick list and /learn explainers
+scripts/backup-db.js     consistent snapshot for the nightly S3 backup
 deploy/remote-deploy.sh  runs on the instance during a deploy
 ```

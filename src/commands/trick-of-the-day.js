@@ -49,6 +49,13 @@ function totdCard(body, trick, variant, fileNames) {
   });
 }
 
+function dailyCard(level, date) {
+  const move = todaysMove(level, date);
+  const levelLabel = level ? ` · ${levelChoices.find(choice => choice.value === level).name}` : '';
+  const body = `## 📅 Trick of the day · ${date}${levelLabel}\n${formatMove(move)}\n-# Same trick for everyone today — a new one at 00:00 UTC.`;
+  return { ...totdCard(body, move.trick, move.variant, []), allowedMentions: NO_PINGS };
+}
+
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('trick-of-the-day')
@@ -56,14 +63,10 @@ module.exports = {
     .addStringOption(option => option.setName('level').setDescription('Get the trick of the day for your level').addChoices(...levelChoices)),
 
   todaysMove,
+  dailyCard,
 
   async execute(interaction) {
-    const level = interaction.options.getString('level');
-    const today = new Date().toISOString().slice(0, 10);
-    const move = todaysMove(level, today);
-    const levelLabel = level ? ` · ${levelChoices.find(choice => choice.value === level).name}` : '';
-    const body = `## 📅 Trick of the day · ${today}${levelLabel}\n${formatMove(move)}\n-# Same trick for everyone today — a new one at 00:00 UTC.`;
-    await interaction.reply({ ...totdCard(body, move.trick, move.variant, []), allowedMentions: NO_PINGS });
+    await interaction.reply(dailyCard(interaction.options.getString('level'), new Date().toISOString().slice(0, 10)));
   },
 
   async button(interaction) {

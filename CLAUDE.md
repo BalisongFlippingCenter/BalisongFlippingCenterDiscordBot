@@ -19,6 +19,7 @@ A public Discord bot that any server can add: a general balisong resource powere
 | `/combo level:` | Random combo at or below the level (always includes at least one trick at it); number of tricks is random and grows with level. Requester-only 🎲 Reroll and 📹 I landed it buttons |
 | `/balidare combo user: [level:] [combo:]` | Dare a user with a generated (by level) or typed combo. Pings only the dared user |
 | `/balidare video user: video: [note:]` | Dare a user with your own clip. Guild-only; 5 dares per user per 10 min (in-memory) |
+| `/setup` | Manage Server only, guild-only, all replies ephemeral. `trick-of-the-day channel: [hour] [level]` (hour in UTC, default 14; the reply shows it as a local-time Discord timestamp; checks the bot can View Channel + Send Messages there), `trick-of-the-day-off`, `latch-channel [channel]` / `games-channel [channel]` (empty = every channel), `view` |
 | `/help` | Ephemeral command list |
 
 ## Combos & Balidares
@@ -31,11 +32,18 @@ A public Discord bot that any server can add: a general balisong resource powere
 - Calls the backend's `POST /ai/chat` with `X-Client-Id: discord` / `X-Client-Key: AI_CLIENT_KEY_DISCORD`. The backend forwards `client: "discord"` to the AI service, which then uses a separate Discord persona (general balisong expert, Discord markdown) with only the catalog tools plus a Brave-backed `web_search` tool — see the AI service README.
 - `sessionId` = `discord-<channelId>-<userId>`: per-user conversation memory per channel (24h in Redis), and the backend's 10/min rate limit applies per session.
 - **Threads** (`src/utils/latchThread.js`): in a text/announcement channel where the bot has Create Public Threads + Send Messages in Threads, `/latch` (and the trick card's Ask Latch button) posts "@user asked Latch: …" and opens a thread on it; an @mention opens the thread on the user's own message. The answer streams in the thread, the asker is added, and the session is keyed to the thread ID — so @mentioning the bot inside the thread continues the conversation, and `/latch-reset` there clears just that thread. Inside threads, in DMs, or without the permissions, answers stay inline. `canStartThread` in `src/utils/threads.js` is the single check.
-- Channel placement is left to server admins via Discord's built-in per-command permissions (Server Settings → Integrations → the bot), which `/help` points out — deliberately no hardcoded channel names (servers name channels differently and renames would break it). A per-server `/setup` would need persistence.
+- Channel placement: `/setup latch-channel` / `games-channel` (see Persistence), on top of Discord's built-in per-command permissions (Server Settings → Integrations → the bot) for roles and finer control. No hardcoded channel names.
 - Bot-side cost guard: `src/utils/latchLimiter.js`, in-memory sliding windows — per server per hour (`LATCH_LIMIT_PER_SERVER_PER_HOUR`, default 30; DMs keyed per user) and across all servers per day (`LATCH_LIMIT_GLOBAL_PER_DAY`, default 500). Resets on restart.
 - Backend errors are logged; users only see a friendly message (429 gets a "slow down" message). Every event handler's rejections are caught and logged in `src/handlers/index.js`, so a failed reply (missing permissions, deleted message) can't crash the process.
 - Replies stream by editing the message ~every 1.2s and split across messages at 2,000 chars. All output uses `allowedMentions: { parse: [] }` so Latch can never ping.
 - Only `Guilds` + `GuildMessages` intents — **no privileged Message Content intent**. Discord still delivers content for messages that @mention the bot, which is all mention-to-ask needs, so the bot never needs Discord's privileged-intent verification as it grows.
+
+## Persistence
+- `src/db.js`: one SQLite file via the built-in `node:sqlite` (no native module), tables created with `CREATE TABLE IF NOT EXISTS` on startup — no migration tool. `DB_PATH` (Docker: `/data/bot.db`, a bind mount of `discord-bot/data/` on the instance; locally `data/bot.db`, gitignored; tests use `:memory:`).
+- `guild_settings` (one row per server, `src/utils/guildSettings.js`): trick-of-the-day channel/hour/level + `totd_last_posted`, Latch channel, games channel. Rows are deleted on `guildDelete` (only when `guild.available`, since an outage also fires it) and by the scheduler for servers the bot is no longer in.
+- **Channel rules** (`src/utils/channelRules.js`): commands with `channelRule: 'games'` (quiz, bali, combo, balidare) are refused with an ephemeral pointer outside the games channel, checked in `interactionCreate` for slash commands only (buttons on existing cards keep working). Latch is checked in `latch.js`'s `ask` (so `/latch` and the trick card's Ask Latch button) and in `messageCreate`, where off-channel @mentions are ignored silently. Threads count as their parent channel.
+- **Trick-of-the-day auto-post** (`src/utils/trickOfTheDayScheduler.js`): checks every minute (and on startup) for servers whose UTC hour has arrived and `totd_last_posted` < today, marks them posted **before** sending (so an overlap or crash can't double-post), then sends `dailyCard` — the same card as `/trick-of-the-day`, so landing clips work. A restart past the hour catches up the same day. Unknown Channel (10003) turns the post off; other failures (lost access/permissions) just skip that day.
+- **Backups**: `remote-deploy.sh` writes `backup.sh` + a systemd timer (`discord-bot-backup.timer`, 03:30 UTC) that runs `scripts/backup-db.js` (`VACUUM INTO data/backup.db`) in the container and uploads it to `s3://balisong-flipping-center-discord-bot-backups-prod/daily/<date>.db` and `latest.db`; every deploy also runs one, so a broken backup fails the deploy. If `data/bot.db` is missing, the deploy restores `latest.db` first; only a 404 (no backup yet) starts empty — any other S3 error fails the deploy so it can never back up an empty DB over the real one. Bucket + instance-role permissions are in the Terraform repo.
 
 ## Running
 - `npm install`, copy `.env.example` → `.env`, fill in values (`AI_CLIENT_KEY_DISCORD` must match the backend's)
@@ -54,5 +62,5 @@ A public Discord bot that any server can add: a general balisong resource powere
 
 ## Known Gaps / To Do
 - Add expert tricks, then add `expert` back to `MID_COUNTS` in `comboGenerator.js`
-- Needs persistence (a database): balidare/combo/quiz stats and leaderboards, a `/learned` trick progress tracker, per-server `/setup` (games/Latch channels), auto-posting the trick of the day, and moving quiz rounds and B.A.L.I. games out of memory so deploys don't end them
+- Needs persistence (a database): balidare/combo/quiz stats and leaderboards, a `/learned` trick progress tracker, and moving quiz rounds and B.A.L.I. games out of memory so deploys don't end them
 - Fun idea not built yet: `/knife random`

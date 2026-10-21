@@ -22,7 +22,7 @@ module.exports = {
         '`/balidare combo|video user:...` — dare someone to land a combo or match your clip; they answer with a video',
         '`/bali` — a game of B.A.L.I.: miss a trick, earn a letter',
         '`/quiz` — a quick balisong quiz for the channel: 5 questions, 20 seconds each, with a leaderboard',
-        '-# **Admins:** limit any command to specific channels or roles in *Server Settings → Integrations → Balisong Flipping Center Bot* — e.g. games in one channel, Latch in another. Latch answers and B.A.L.I. games open their own threads to keep chats tidy.'
+        '-# **Admins:** `/setup` posts the trick of the day in a channel every day and can keep Latch and games to their own channels. For finer control (roles, more channels), use *Server Settings → Integrations → Balisong Flipping Center Bot*. Latch answers and B.A.L.I. games open their own threads to keep chats tidy.'
       ].join('\n\n'))
       .setFooter({ text: 'Powered by Balisong Flipping Center' });
 

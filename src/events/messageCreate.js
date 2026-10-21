@@ -2,6 +2,7 @@ const askLatch = require('../utils/askLatch');
 const askLatchInThread = require('../utils/latchThread');
 const latchLimiter = require('../utils/latchLimiter');
 const { canStartThread } = require('../utils/threads');
+const { wrongChannel } = require('../utils/channelRules');
 
 const NO_PINGS = { parse: [] };
 
@@ -9,6 +10,7 @@ module.exports = {
   name: 'messageCreate',
   async execute(message) {
     if (message.author.bot || !message.mentions.users.has(message.client.user.id)) return;
+    if (wrongChannel('latch', message)) return;
 
     const question = message.content.replace(/<@!?\d+>/g, '').trim();
     if (!question) {
