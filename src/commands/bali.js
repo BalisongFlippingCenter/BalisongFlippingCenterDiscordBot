@@ -206,6 +206,9 @@ module.exports = {
     .setDescription('Start a game of B.A.L.I. — miss a trick, earn a letter.')
     .setContexts(InteractionContextType.Guild),
 
+  problemWith,
+  apply,
+
   async execute(interaction) {
     for (const [messageId, game] of games) {
       if (Date.now() - game.lastActive > IDLE_MS) games.delete(messageId);

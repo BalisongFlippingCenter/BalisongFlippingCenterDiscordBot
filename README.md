@@ -59,7 +59,7 @@ It's a general balisong resource for any server — not support for the BFC webs
 ## Hosting & deploys
 
 - Runs as a **Docker container on the existing production backend EC2 instance**, as its own Compose project — no extra servers, and bot deploys never restart the backend.
-- **GitHub Actions** on every push to `main`: syntax check + load every command definition → build and push the image to **ECR** → **SSM Run Command** writes the Compose file and settings, pulls, restarts, re-registers slash commands, and fails the deploy unless the bot logs in within 60s.
+- **GitHub Actions** on every push to `main`: syntax check + load every command definition + unit tests → build and push the image to **ECR** → **SSM Run Command** writes the Compose file and settings, pulls, restarts, re-registers slash commands, and fails the deploy unless the bot logs in within 60s.
 - AWS access is via **GitHub OIDC** — no long-lived keys. The deploy role is scoped to this repo's `main` branch, this repo's ECR repository, and the one instance, which the workflow finds by its `Name` tag.
 - Secrets (the bot token, the shared Latch client key) live in **SSM Parameter Store** and are re-read on every deploy. Infrastructure is in Terraform in the org's infra repo.
 
@@ -70,6 +70,7 @@ npm install
 cp .env.example .env        # fill in values; AI_CLIENT_KEY_DISCORD must match the backend's
 npm run deploy-commands     # register slash commands (rerun after changing a command's definition)
 npm run dev                 # or: npm start
+npm test                    # unit tests (node:test, no extra dependencies)
 ```
 
 Use a **separate Discord application/token** for local development — running locally with the production token while the hosted bot is up makes both answer every interaction.

@@ -34,6 +34,9 @@ jobs:
       - name: Load every command definition
         run: node -e "for (const f of require('fs').readdirSync('src/commands')) require('./src/commands/' + f).data.toJSON()"
 
+      - name: Unit tests
+        run: npm test
+
   deploy:
     needs: check
     runs-on: ubuntu-latest
