@@ -146,6 +146,8 @@ async function askQuestion(game) {
 }
 
 module.exports = {
+  channelRule: 'games',
+
   data: new SlashCommandBuilder()
     .setName('quiz')
     .setDescription('A balisong quiz for the channel — 20 seconds per question, anyone can play.')

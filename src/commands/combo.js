@@ -21,6 +21,8 @@ function comboCard(ownerId, level, body) {
 }
 
 module.exports = {
+  channelRule: 'games',
+
   data: new SlashCommandBuilder()
     .setName('combo')
     .setDescription('Get a random balisong combo for your skill level.')

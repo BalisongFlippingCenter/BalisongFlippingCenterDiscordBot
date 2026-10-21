@@ -29,6 +29,8 @@ function dareCard(body, targetId, videoNames = []) {
 }
 
 module.exports = {
+  channelRule: 'games',
+
   data: new SlashCommandBuilder()
     .setName('balidare')
     .setDescription('Dare someone to land a combo.')

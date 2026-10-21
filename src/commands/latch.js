@@ -3,10 +3,17 @@ const askLatch = require('../utils/askLatch');
 const askLatchInThread = require('../utils/latchThread');
 const latchLimiter = require('../utils/latchLimiter');
 const { canStartThread } = require('../utils/threads');
+const { wrongChannel } = require('../utils/channelRules');
 
 const NO_PINGS = { parse: [] };
 
 async function ask(interaction, question) {
+  const pointer = wrongChannel('latch', interaction);
+  if (pointer) {
+    await interaction.reply({ content: pointer, ephemeral: true });
+    return;
+  }
+
   const limitReached = latchLimiter.acquire(interaction.guildId ?? `user-${interaction.user.id}`);
   if (limitReached) {
     await interaction.reply({ content: limitReached, ephemeral: true });

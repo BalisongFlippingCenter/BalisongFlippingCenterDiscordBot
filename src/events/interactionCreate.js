@@ -1,3 +1,5 @@
+const { wrongChannel } = require('../utils/channelRules');
+
 module.exports = {
   name: 'interactionCreate',
   async execute(interaction) {
@@ -9,6 +11,12 @@ module.exports = {
     if (!command) return;
 
     try {
+      const pointer = interaction.isChatInputCommand() && command.channelRule && wrongChannel(command.channelRule, interaction);
+      if (pointer) {
+        await interaction.reply({ content: pointer, ephemeral: true });
+        return;
+      }
+
       if (interaction.isAutocomplete()) {
         await command.autocomplete(interaction);
       } else if (interaction.isButton()) {

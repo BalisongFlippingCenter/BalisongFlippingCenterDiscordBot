@@ -205,6 +205,8 @@ async function closeThread(thread, botPermissions) {
 }
 
 module.exports = {
+  channelRule: 'games',
+
   data: new SlashCommandBuilder()
     .setName('bali')
     .setDescription('Start a game of B.A.L.I. — miss a trick, earn a letter.')
