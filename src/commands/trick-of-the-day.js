@@ -55,6 +55,8 @@ module.exports = {
     .setDescription('Today\'s trick — the same for everyone, everywhere.')
     .addStringOption(option => option.setName('level').setDescription('Get the trick of the day for your level').addChoices(...levelChoices)),
 
+  todaysMove,
+
   async execute(interaction) {
     const level = interaction.options.getString('level');
     const today = new Date().toISOString().slice(0, 10);

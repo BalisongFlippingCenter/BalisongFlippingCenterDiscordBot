@@ -152,6 +152,9 @@ module.exports = {
     .addIntegerOption(option =>
       option.setName('questions').setDescription(`How many questions (default ${DEFAULT_QUESTIONS})`).setMinValue(3).setMaxValue(10)),
 
+  buildQuestion,
+  shuffle,
+
   async execute(interaction) {
     await interaction.deferReply();
     const questions = await buildQuiz(interaction.options.getInteger('questions') ?? DEFAULT_QUESTIONS);
