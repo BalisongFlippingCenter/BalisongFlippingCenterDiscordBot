@@ -17,6 +17,7 @@ const NO_PINGS = { parse: [] };
 const LETTERS = ['B', 'A', 'L', 'I'];
 const MAX_PLAYERS = 8;
 const IDLE_MS = 2 * 60 * 60 * 1000;
+const INTERACTION_EDIT_WINDOW_MS = 14 * 60 * 1000;
 const BALI_THREAD_ARCHIVE_MINUTES = 60;
 const games = new Map();
 
@@ -55,7 +56,9 @@ function render(game) {
       buttons: [button('landed', 'Landed', '✅', ButtonStyle.Success), button('missed', 'Missed', '❌', ButtonStyle.Danger), button('skip', 'Skip the rest', '⏭️'), end]
     }),
     over: () => ({
-      status: game.winner ? `🏆 ${mention(game.winner)} wins!` : '🛑 Game ended by the host.',
+      status: game.winner ? `🏆 ${mention(game.winner)} wins!`
+        : game.restarted ? '⚠️ The bot restarted, so this game ended. Start a new one with `/bali`.'
+        : '🛑 Game ended by the host.',
       buttons: []
     })
   };
@@ -180,6 +183,7 @@ function turnPing(game) {
 
 async function updateGame(interaction, messageId, game) {
   game.lastActive = Date.now();
+  game.interaction = interaction;
   if (game.phase === 'over') games.delete(messageId);
   await interaction.update(render(game));
 
@@ -209,14 +213,29 @@ module.exports = {
   problemWith,
   apply,
 
+  async shutdown() {
+    await Promise.all([...games.values()].map(async game => {
+      game.phase = 'over';
+      game.restarted = true;
+      const card = render(game);
+      try {
+        await (Date.now() - game.lastActive < INTERACTION_EDIT_WINDOW_MS ? game.interaction.editReply(card) : game.message.edit(card));
+        if (game.thread) await closeThread(game.thread, game.botPermissions);
+      } catch (error) {
+        console.error('Ending a B.A.L.I. game on shutdown failed:', error);
+      }
+    }));
+  },
+
   async execute(interaction) {
     for (const [messageId, game] of games) {
       if (Date.now() - game.lastActive > IDLE_MS) games.delete(messageId);
     }
 
-    const game = { hostId: interaction.user.id, players: [{ id: interaction.user.id, letters: 0 }], phase: 'lobby', lastActive: Date.now() };
+    const game = { hostId: interaction.user.id, players: [{ id: interaction.user.id, letters: 0 }], phase: 'lobby', lastActive: Date.now(), interaction, botPermissions: interaction.appPermissions };
     const response = await interaction.reply({ ...render(game), withResponse: true });
     const message = response.resource.message;
+    game.message = message;
     games.set(message.id, game);
 
     if (canStartThread(interaction.channel, interaction.appPermissions)) {

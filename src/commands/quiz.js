@@ -102,7 +102,7 @@ function resultsMessage(game) {
     .setColor(0x5865F2)
     .setTitle('🏁 Balisong quiz results')
     .setDescription(lines.join('\n') || 'Nobody answered 😬')
-    .setFooter({ text: `${game.questionsAsked} ${game.questionsAsked === 1 ? 'question' : 'questions'} · ${standings.length} played · run /quiz for another` });
+    .setFooter({ text: `${game.restarted ? 'Ended early — the bot restarted · ' : ''}${game.questionsAsked} ${game.questionsAsked === 1 ? 'question' : 'questions'} · ${standings.length} played · run /quiz for another` });
   return { embeds: [embed], components: [], allowedMentions: NO_PINGS };
 }
 
@@ -154,6 +154,13 @@ module.exports = {
 
   buildQuestion,
   shuffle,
+
+  async shutdown() {
+    await Promise.all([...games.values()].map(game => {
+      game.restarted = true;
+      return finish(game).catch(error => console.error('Ending a quiz on shutdown failed:', error));
+    }));
+  },
 
   async execute(interaction) {
     await interaction.deferReply();

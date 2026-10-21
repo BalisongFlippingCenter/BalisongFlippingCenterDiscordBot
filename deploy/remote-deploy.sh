@@ -19,6 +19,7 @@ services:
     image: ${IMAGE}
     container_name: discord-bot
     restart: unless-stopped
+    stop_grace_period: 30s
     env_file:
       - .env
     extra_hosts:
