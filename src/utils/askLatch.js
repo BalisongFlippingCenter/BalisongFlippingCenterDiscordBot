@@ -1,3 +1,5 @@
+const latchFeedback = require('./latchFeedback');
+
 const DISCORD_MESSAGE_LIMIT = 2000;
 const EDIT_INTERVAL_MS = 1200;
 const NO_PINGS = { parse: [] };
@@ -45,6 +47,7 @@ module.exports = async ({ sessionId, question, firstMessage, sendFollowUp }) => 
     }
   };
 
+  let answered = false;
   try {
     const response = await requestLatch(sessionId, question);
     if (!response.ok) {
@@ -65,11 +68,16 @@ module.exports = async ({ sessionId, question, firstMessage, sendFollowUp }) => 
       }
     }
     text += decoder.decode();
-    if (!text.trim()) text = "⚠️ Latch didn't return an answer. Try asking again.";
+    answered = Boolean(text.trim());
+    if (!answered) text = "⚠️ Latch didn't return an answer. Try asking again.";
   } catch (error) {
     console.error('Latch request failed:', error);
     text += `${text ? '\n\n' : ''}⚠️ Lost the connection to Latch. Try asking again.`;
   }
 
   await render();
+  if (answered) {
+    const answerId = latchFeedback.recordAnswer(sessionId, question, text);
+    await sent.at(-1).edit({ content: shown.at(-1), components: [latchFeedback.feedbackButtons(answerId)], allowedMentions: NO_PINGS });
+  }
 };

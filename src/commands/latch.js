@@ -4,6 +4,7 @@ const askLatchInThread = require('../utils/latchThread');
 const latchLimiter = require('../utils/latchLimiter');
 const { canStartThread } = require('../utils/threads');
 const { wrongChannel } = require('../utils/channelRules');
+const latchFeedback = require('../utils/latchFeedback');
 
 const NO_PINGS = { parse: [] };
 
@@ -51,5 +52,12 @@ module.exports = {
 
   async execute(interaction) {
     await ask(interaction, interaction.options.getString('question'));
+  },
+
+  async button(interaction) {
+    const [, rating, answerId] = interaction.customId.split(':');
+    const saved = latchFeedback.rate(Number(answerId), interaction.user.id, rating === 'up' ? 1 : -1);
+    const thanks = rating === 'up' ? 'Thanks — glad it helped! 👍' : 'Thanks — this helps make Latch better. 👎';
+    await interaction.reply({ content: saved ? thanks : 'This answer is too old to rate.', ephemeral: true });
   }
 };

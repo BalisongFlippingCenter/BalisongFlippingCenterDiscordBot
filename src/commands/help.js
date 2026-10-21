@@ -10,7 +10,7 @@ module.exports = {
       .setColor(0x5865F2)
       .setTitle('Balisong Bot')
       .setDescription([
-        '**Ask Latch** — the balisong AI. Use `/latch question:...` or just @mention me with your question. Latch knows the knife catalog and can search the web for newer info. It remembers your conversation in each channel for a while, so follow-ups work. Use `/latch-reset` to start over.',
+        '**Ask Latch** — the balisong AI. Use `/latch question:...` or just @mention me with your question. Latch knows the knife catalog and can search the web for newer info. It remembers your conversation in each channel for a while, so follow-ups work. Use `/latch-reset` to start over. Rate answers with 👍/👎 to help improve Latch — questions and answers are kept for 30 days for this (longer once rated).',
         '`/knife name:...` — specs, versions, and pricing for a balisong',
         '`/maker name:...` — a maker and their knives',
         '`/compare knife1:... knife2:...` — two balisongs side by side',

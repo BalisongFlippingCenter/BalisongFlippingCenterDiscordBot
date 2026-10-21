@@ -12,7 +12,7 @@ It's a general balisong resource for any server — not support for the BFC webs
 
 | | Command | What it does |
 |---|---|---|
-| **Latch AI** | `/latch question:` or @mention | Ask Latch anything — answers stream in a thread, and it remembers the conversation there |
+| **Latch AI** | `/latch question:` or @mention | Ask Latch anything — answers stream in a thread, and it remembers the conversation there. Rate answers 👍/👎; ratings export as eval cases |
 | | `/latch-reset` | Make Latch forget your conversation in this channel/thread |
 | **Catalog** | `/knife name:` | Specs, versions, variants, and MSRP for a balisong |
 | | `/maker name:` | A maker and their knives |
@@ -72,6 +72,7 @@ cp .env.example .env        # fill in values; AI_CLIENT_KEY_DISCORD must match t
 npm run deploy-commands     # register slash commands (rerun after changing a command's definition)
 npm run dev                 # or: npm start
 npm test                    # unit tests (node:test, no extra dependencies)
+npm run export-feedback     # rated Latch answers as stub eval cases
 ```
 
 Use a **separate Discord application/token** for local development — running locally with the production token while the hosted bot is up makes both answer every interaction.
@@ -84,8 +85,9 @@ deploy-commands.js       registers every command globally
 src/commands/            one file per slash command (plus its button/modal handlers)
 src/events/              interactionCreate (routes commands, buttons, modals) · messageCreate (@mentions) · guildDelete
 src/utils/               Latch streaming + limits, catalog client, combo generator, cards, threads
-src/db.js                SQLite (node:sqlite) — per-server settings
+src/db.js                SQLite (node:sqlite) — per-server settings, Latch answers and ratings
 src/content/             trick list and /learn explainers
 scripts/backup-db.js     consistent snapshot for the nightly S3 backup
+scripts/export-feedback.js  rated Latch answers as stub eval cases
 deploy/remote-deploy.sh  runs on the instance during a deploy
 ```
