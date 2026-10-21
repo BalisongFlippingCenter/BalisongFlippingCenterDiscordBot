@@ -80,10 +80,12 @@ services:
       - host.docker.internal:host-gateway
     mem_limit: 256m
     logging:
-      driver: json-file
+      driver: awslogs
       options:
-        max-size: 10m
-        max-file: "3"
+        awslogs-region: ${AWS_DEFAULT_REGION}
+        awslogs-group: /balisong/prod/discord-bot
+        mode: non-blocking
+        max-buffer-size: 4m
 EOF
 
 umask 077
